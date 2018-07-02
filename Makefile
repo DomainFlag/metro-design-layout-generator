@@ -2,7 +2,12 @@ CXX = g++
 CXXFLAGS = -g -Wall --std=c++11
 TARGET = main
 
-OBJS = $(patsubst %.cpp, %.o, $(wildcard *.cpp))
+vpath %.cpp ./src
+vpath %.h ./include
+vpath %.o ./obj
+
+OBJS = $(patsubst ./src/%.cpp, ./obj/%.o, $(wildcard ./src/*.cpp))
+OBJDIR = ./obj/
 
 .PHONY: clean run
 
@@ -11,7 +16,7 @@ all: clean $(TARGET) run
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-%.o: %.cpp %.h
+$(OBJDIR)%.o: %.cpp %.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 %.h:
