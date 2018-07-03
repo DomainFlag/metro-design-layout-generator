@@ -1,9 +1,13 @@
 #ifndef LIST_SENTINEL
 #define LIST_SENTINEL
 
+#include <iostream>
+#include <vector>
+#include "./Block.h"
+
 template <typename T>
 struct Cell {
-    T * item;
+    T item;
     Cell<T> * next;
     Cell<T> * previous;
 };
@@ -12,11 +16,13 @@ template <class T>
 class List {
 public:
     int length = 0;
-    Cell<T> * sentinel;
-    Cell<T> * first;
-    Cell<T> * last;
+    Cell<T> * sentinel = NULL;
+    Cell<T> * first = NULL;
+    Cell<T> * last = NULL;
 
     List();
+
+    List(vector<T> & input);
 
     ~List();
 
@@ -26,15 +32,19 @@ public:
 
     unsigned int size() const;
 
-    T at(unsigned int index) const;
+    T get() const;
+
+    void print() const;
 
     void remove();
 
-    void insert(T item);
+    void add(T item);
 
-    void moveForwards();
+    bool endOfList();
 
-    void moveBackwards();
+    bool moveForwards();
+
+    bool moveBackwards();
 
 };
 

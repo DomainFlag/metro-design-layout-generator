@@ -3,28 +3,12 @@
 #include <string>
 #include <fstream>
 #include <math.h>
+#include <string.h>
 #include <stdlib.h>
 
 #include "./../include/ListSentinel.h"
+#include "./../include/Block.h"
 using namespace std;
-
-class Block {
-public:
-    int width, height;
-    char symbol;
-
-    Block(char symbol, int width, int height) {
-        this->symbol = symbol;
-        this->width = width;
-        this->height = height;
-    }
-
-    void print() {
-        cout << "Symbol: " << this->symbol << endl;
-        cout << "Width: " << this->width << endl;
-        cout << "Height: " << this->height << endl;
-    }
-};
 
 class Container {
 public:
@@ -44,22 +28,29 @@ public:
     }
 
     void remove() {
+        if(this->container == NULL)
+            return;
+
         for(int itg = 0; itg < this->height; itg++)
             delete [] this->container[itg];
 
         delete [] this->container;
+
+        this->container = NULL;
     }
 
     void inflate() {
-        container = new char * [this->height];
-        for(int itg = 0; itg < this->height; itg++)
-            container[itg] = new char[this->width]{'0'};
-
+        this->container = new char * [this->height];
+        for(int itg = 0; itg < this->height; itg++) {
+            this->container[itg] = new char[this->width];
+            memset(this->container[itg], '0', this->width);
+        }
     }
 
     void expand() {
-        this->height += 1;
+        this->remove();
 
+        this->height += 1;
         inflate();
     }
 
@@ -101,9 +92,9 @@ public:
     }
 
     void print() {
-        for(int g = 0; g < this->width; g++) {
-            for(int h = 0; h < this->height; h++) {
-                cout << this->container[g][h];
+        for(int h = 0; h < this->height; h++) {
+            for(int g = 0; g < this->width; g++) {
+                cout << this->container[h][g];
             }
             cout << endl;
         }
@@ -111,28 +102,11 @@ public:
     }
 };
 
-class Domino {
-public:
-    List<Block *> * blocks;
-    int space;
-
-    Domino() {
-        this->blocks = new List<Block *>();
-    }
-
-    Domino(vector<Block> & blocks) {
-        for(unsigned int itg = 0; itg < blocks.size(); itg++)
-            this->blocks->insert(&blocks[itg]);
-    }
-
-};
-
 class Metro {
 public:
     vector<Block> input;
-    vector<Block *> remainingBlocks;
     Container * container;
-    Domino * domino;
+    List<Block *> * blocks;
 
     int width, height = 0;
     int space;
@@ -140,10 +114,20 @@ public:
     Metro(string fileName, int widthMax = 5) {
         readFile(fileName, widthMax);
 
-        this->domino = new Domino();
-        this->domino->blocks->clear();
+        this->fillBlocks();
+        this->fillContainer();
+    }
+
+    void fillContainer() {
         this->container = new Container(this->width, this->height);
         this->space = this->width*this->height;
+    }
+
+    void fillBlocks() {
+        this->blocks = new List<Block *>();
+        for(unsigned int itg = 0; itg < this->input.size(); itg++) {
+            this->blocks->add(&input[itg]);
+        }
     }
 
     void readFile(string fileName, int widthMax) {
@@ -185,60 +169,49 @@ public:
         }
     }
 
-    Block * popBlock(int index) {
-        Block * block = this->remainingBlocks[index];
-        this->remainingBlocks.erase(this->remainingBlocks.begin()+index);
-
-        return block;
-    }
-
-    void pushBlock(Block * block, int index) {
-        this->remainingBlocks.insert(this->remainingBlocks.begin()+index, block);
-    }
-
     void size() {
         cout << "Container size: " << "w:" << this->width << " " << "h:" << this->height << endl;
     }
 
     bool isThereFreeSpace() {
-        return (this->space-this->container->usedSpace-this->domino->space) >= 0;
+        return (this->space-this->container->usedSpace-this->blocks->length) >= 0;
     }
 };
 
 bool fillMetro(Metro & metro) {
-    if(metro.domino->blocks->isEmpty())
+    if(metro.blocks->isEmpty())
         return true;
 
-    for(int it = metro.domino->blocks->length-1; it >= 0; it++) {
-
-        Block * block = metro.domino->blocks->at(it);
+    while(metro.blocks->moveForwards()) {
+        Block * block = metro.blocks->get();
+        metro.blocks->remove();
 
         for(int g = 0; g < metro.width; g++) {
             for(int h = 0; h < metro.height; h++) {
 
                 if(metro.container->checkBlock(block, g, h)) {
-                    metro.domino->blocks->remove();
+                    metro.blocks->remove();
                     metro.container->fillBlock(block, g, h);
 
                     if(!fillMetro(metro)) {
-                        metro.domino->blocks->insert(block);
+                        metro.blocks->add(block);
                         metro.container->unfillBlock(block, g, h);
                     } else return true;
                 };
             }
         }
-
     }
 
     return false;
 }
 
 void createMetro(Metro & metro) {
+    cout << metro.blocks->isEmpty() << endl;
     while(!fillMetro(metro)) {
-        // metro.expand();
+        metro.container->expand();
     };
 
-    // metro.print();
+    metro.container->print();
 }
 
 int getMaxBlocks(vector<Block> & blocks) {
@@ -251,7 +224,7 @@ int getMaxBlocks(vector<Block> & blocks) {
 
 int main() {
     Metro metro("input.txt");
-    // createMetro(metro);
+    createMetro(metro);
 
     return 0;
 }
