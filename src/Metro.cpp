@@ -13,13 +13,14 @@ using namespace std;
 class Container {
 public:
     int width, height;
-    char ** container;
+    char ** container = NULL;
     int usedSpace = 0;
 
     Container(int width, int height) {
         this->width = width;
         this->height = height;
 
+        remove();
         inflate();
     }
 
@@ -35,8 +36,6 @@ public:
             delete [] this->container[itg];
 
         delete [] this->container;
-
-        this->container = NULL;
     }
 
     void inflate() {
@@ -108,19 +107,15 @@ public:
     Container * container;
     List<Block *> * blocks;
 
-    int width, height = 0;
+    int width, height = 7;
     int space;
 
-    Metro(string fileName, int widthMax = 5) {
+    Metro(string fileName, int widthMax = 7) {
         readFile(fileName, widthMax);
 
         this->fillBlocks();
+        this->validateBoundaries();
         this->fillContainer();
-    }
-
-    void fillContainer() {
-        this->container = new Container(this->width, this->height);
-        this->space = this->width*this->height;
     }
 
     void fillBlocks() {
@@ -128,6 +123,27 @@ public:
         for(unsigned int itg = 0; itg < this->input.size(); itg++) {
             this->blocks->add(&input[itg]);
         }
+    }
+
+    void validateBoundaries() {
+        int acc = 0;
+
+        Cell<Block *> * it = this->blocks->sentinel;
+        do {
+            Block * bl = this->blocks->sentinel->item;
+            acc += bl->width*bl->height;
+
+            this->blocks->moveForwards();
+        } while(it != this->blocks->sentinel);
+
+        if(acc > this->width*this->height)
+            this->height = ceil((float) acc/this->width);
+
+    }
+
+    void fillContainer() {
+        this->container = new Container(this->width, this->height);
+        this->space = this->width*this->height;
     }
 
     void readFile(string fileName, int widthMax) {
@@ -182,32 +198,40 @@ bool fillMetro(Metro & metro) {
     if(metro.blocks->isEmpty())
         return true;
 
-    while(metro.blocks->moveForwards()) {
-        Block * block = metro.blocks->get();
-        metro.blocks->remove();
+    Cell<Block *> * it = metro.blocks->sentinel;
+    do {
+        if(metro.blocks->sentinel == NULL)
+            return true;
 
-        for(int g = 0; g < metro.width; g++) {
-            for(int h = 0; h < metro.height; h++) {
+        Block * block = metro.blocks->get();
+
+        for(int g = 0; g < metro.container->width; g++) {
+            for(int h = 0; h < metro.container->height; h++) {;
 
                 if(metro.container->checkBlock(block, g, h)) {
-                    metro.blocks->remove();
-                    metro.container->fillBlock(block, g, h);
+                    Cell<Block *> * pCellBlock = metro.blocks->remove();
+                    metro.blocks->moveForwards();
 
+                    metro.container->fillBlock(block, g, h);
                     if(!fillMetro(metro)) {
-                        metro.blocks->add(block);
+                        metro.blocks->moveBackwards();
+                        metro.blocks->add(pCellBlock);
+
                         metro.container->unfillBlock(block, g, h);
                     } else return true;
                 };
             }
         }
-    }
+
+        metro.blocks->moveForwards();
+    } while(it != metro.blocks->sentinel);
 
     return false;
 }
 
 void createMetro(Metro & metro) {
-    cout << metro.blocks->isEmpty() << endl;
     while(!fillMetro(metro)) {
+        cout << "Expanded" << endl;
         metro.container->expand();
     };
 

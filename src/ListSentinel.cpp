@@ -24,7 +24,6 @@ template <class T> void List<T>::clear() {
         return;
     do {
         Cell<T> * cycle = cell->next;
-        cout << "Deleted:" << cell->item << endl;
         delete cell;
 
         cell->next = NULL;
@@ -34,8 +33,6 @@ template <class T> void List<T>::clear() {
         cell = cycle;
     } while(cell->next != NULL);
 
-    cout << "Deleted successfully: " << this->length << " elements."<< endl;
-
     this->first = NULL;
     this->last = NULL;
     this->sentinel = NULL;
@@ -44,48 +41,44 @@ template <class T> void List<T>::clear() {
 }
 
 template <class T> bool List<T>::isEmpty() const {
-	return (this->first == NULL && this->last == NULL && this->sentinel == NULL);
+	return this->length == 0;
 };
 
 template <class T> unsigned int List<T>::size() const {
 	return this->length;
 };
 
-template <class T> void List<T>::remove() {
-    if(this->sentinel == NULL)
-        return;
+template <class T> Cell<T> * List<T>::remove() {
+    if(this->isEmpty())
+        return NULL;
 
-    if(this->sentinel == this->first && this->sentinel == this->last) {
-        this->first = NULL;
-        this->last = NULL;
+    if(this->length == 1) {
+        Cell<T> * result = this->sentinel;
 
-        this->length--;
-
-        delete this->sentinel;
         this->sentinel->next = NULL;
         this->sentinel->previous = NULL;
         this->sentinel = NULL;
 
-        return;
+        this->length--;
+
+        return result;
+    } else {
+        this->sentinel->previous->next = this->sentinel->next;
+        this->sentinel->next->previous = this->sentinel->previous;
+
+        Cell<T> * prov = this->sentinel->previous;
+        Cell<T> * result = this->sentinel;
+
+        this->sentinel->next = NULL;
+        this->sentinel->previous = NULL;
+        this->sentinel = NULL;
+
+        this->sentinel = prov;
+
+        this->length--;
+
+        return result;
     }
-
-    this->sentinel->previous->next = this->sentinel->next;
-    this->sentinel->next->previous = this->sentinel->previous;
-
-    if(this->sentinel == this->first)
-        this->first = this->sentinel->next;
-    else if(this->sentinel == this->last)
-        this->last = this->sentinel->previous;
-
-    Cell<T> * cell = this->sentinel->next;
-
-    delete this->sentinel;
-    this->length--;
-    this->sentinel->next = NULL;
-    this->sentinel->previous = NULL;
-    this->sentinel = NULL;
-
-    this->sentinel = cell;
 };
 
 template <class T> T List<T>::get() const {
@@ -113,19 +106,43 @@ template <class T> void List<T>::add(T item) {
     if(this->isEmpty()) {
         this->first = cell;
         this->last = cell;
+        this->sentinel = cell;
 
         cell->next = this->last;
         cell->previous = this->first;
+    } else {
+        Cell<T> * prov = this->sentinel->next;
+
+        this->sentinel->next = cell;
+        cell->previous = this->sentinel;
+
+        prov->previous = cell;
+        cell->next = prov;
 
         this->sentinel = cell;
-    } else {
-        this->first->previous = cell;
-        this->last->next = cell;
+    }
 
-        cell->next = this->first;
-        cell->previous = this->last;
+    this->length++;
+};
 
+template <class T> void List<T>::add(Cell<T> * cell) {
+    if(this->isEmpty()) {
+        this->first = cell;
         this->last = cell;
+        this->sentinel = cell;
+
+        cell->next = this->last;
+        cell->previous = this->first;
+    } else {
+        Cell<T> * prov = this->sentinel->next;
+
+        this->sentinel->next = cell;
+        cell->previous = this->sentinel;
+
+        prov->previous = cell;
+        cell->next = prov;
+
+        this->sentinel = cell;
     }
 
     this->length++;
@@ -135,30 +152,28 @@ template <class T> bool List<T>::endOfList() {
     return (this->sentinel == this->first || this->sentinel == this->last);
 }
 
-template <class T> bool List<T>::moveForwards() {
-    if(this->isEmpty())
-        return false;
-
-    if(this->sentinel->next == this->first)
-        return false;
-    else {
+template <class T> void List<T>::moveForwards() {
+    if(this->sentinel != NULL)
         this->sentinel = this->sentinel->next;
-    }
-
-    return true;
 }
 
-template <class T> bool List<T>::moveBackwards() {
-    if(this->isEmpty())
-        return false;
-
-    if(this->sentinel->previous == this->last)
-        return false;
-    else {
+template <class T> void List<T>::moveBackwards() {
+    if(this->sentinel != NULL)
         this->sentinel = this->sentinel->previous;
-    }
+}
 
-    return true;
+template <class T> void List<T>::moveAtFirst() {
+    if(this->isEmpty())
+        return;
+
+    this->sentinel = this->first;
+}
+
+template <class T> void List<T>::moveAtLast() {
+    if(this->isEmpty())
+        return;
+
+    this->sentinel = this->last;
 }
 
 template class List<char>;

@@ -53,9 +53,20 @@ void firstTest() {
 }
 
 int main() {
-    firstTest();
+    List<char> * list = new List<char>;
+    list->remove();
+    list->add('1');
+    list->add('2');
 
-    secondTest();
+    Cell<char> * it = list->sentinel;
+    do {
+        if(list->sentinel == NULL)
+            break;
+
+        char res = list->get();
+        cout << res << endl;
+        list->sentinel = list->sentinel->next;
+    } while(it != list->sentinel->previous);
 
     return 0;
 }

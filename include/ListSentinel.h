@@ -36,16 +36,21 @@ public:
 
     void print() const;
 
-    void remove();
+    Cell<T> * remove();
 
     void add(T item);
 
+    void add(Cell<T> * cell);
+
     bool endOfList();
 
-    bool moveForwards();
+    void moveForwards();
 
-    bool moveBackwards();
+    void moveBackwards();
 
+    void moveAtFirst();
+
+    void moveAtLast();
 };
 
 #endif
